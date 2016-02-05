@@ -1,2 +1,22 @@
-/* some style */
+.list-text {
+  display: inline-block;
+}
+
+.name {
+  min-width: 120px;
+}
+
+.item-badge {
+  margin-right: 10px;
+  font-size: 2rem !important;
+}
+
+.bug {
+  color: red;
+}
+
+.main {
+  margin-top: 40px;
+}
+
 
