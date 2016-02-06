@@ -1,5 +1,7 @@
 (ns user-reports.core
-  (:require [reagent.core :as reagent :refer [atom]]))
+  (:require-macros [reagent.ratom :refer [reaction]])
+  (:require [reagent.core :as reagent :refer [atom]]
+            [re-frame.core :as rf]))
 
 (enable-console-print!)
 
