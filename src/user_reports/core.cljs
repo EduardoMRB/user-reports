@@ -50,7 +50,7 @@
    (dissoc db :active-ticket)))
 
 (rf/register-handler
- :ticket-clicked
+ :ticket
  (fn [db [_ ticket-id]]
    (assoc db :active-ticket {:id ticket-id})))
 
@@ -72,8 +72,7 @@
   (.toLocaleDateString date))
 
 (defn ticket-row [ticket]
-  [:a.list-group-item {:href "#"
-                       :on-click #(rf/dispatch [:ticket-clicked (:id ticket)])}
+  [:a.list-group-item {:href (route/path-for :ticket :id (:id ticket))}
    [:span {:class (case (:type ticket)
                     "bug" "fa fa-bug bug item-badge"
                     "suggestion" "fa fa-microphone item-badge")}]
@@ -89,17 +88,16 @@
       [:span.glyphicon.glyphicon-paperclip]])])
 
 (defn ticket-card [ticket]
-  (println ticket)
   [:div
    [:h1 (:title ticket)]
    [:p (:description ticket)]
    [:p (str "Reportado por: " (:issued-by ticket)
             " em: " (localize-date (:issued-at ticket)))]])
 
-(defn fetch-ticket [db id]
+(defn fetch-ticket [db ticket-id]
   (->> @db
        :tickets
-       (filter #(= (:id %) id))
+       (filter #(= (:id %) (js/parseInt ticket-id)))
        (first)))
 
 (defn navigation []
@@ -108,7 +106,7 @@
       [:div.container
        [:div.row
         [:div.btn-group
-         [:button.btn.btn-default {:on-click #(rf/dispatch [:index])}
+         [:a.btn.btn-default {:href (route/path-for :index)}
           [:span.glyphicon.glyphicon-arrow-left " Voltar"]]]]])))
 
 (defn tickets-app []
@@ -120,6 +118,7 @@
       ^{:key "navigation"} [navigation]
       (if (:active-ticket @db)
         (let [active-ticket (-> @db :active-ticket :id)]
+          (println (fetch-ticket db active-ticket))
           ^{:key (str "ticket-" active-ticket)} [ticket-card (fetch-ticket db active-ticket)])
         (list
          ^{:key "toolbar"} [toolbar]
