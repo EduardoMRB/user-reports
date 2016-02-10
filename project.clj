@@ -13,7 +13,11 @@
                  [reagent "0.5.1"]
                  [re-frame "0.7.0-alpha-2"]
                  [bidi "1.25.0"]
-                 [kibu/pushy "0.3.6"]]
+                 [kibu/pushy "0.3.6"]
+                 [io.pedestal/pedestal.service "0.4.1"]
+                 [io.pedestal/pedestal.service-tools "0.4.1"]
+                 [io.pedestal/pedestal.jetty "0.4.1"]
+                 [ns-tracker "0.3.0"]]
 
   :plugins [[lein-figwheel "0.5.0-6"]
             [lein-cljsbuild "1.1.2" :exclusions [[org.clojure/clojure]]]]
@@ -24,6 +28,8 @@
   :source-paths ["src"]
 
   :clean-targets ^{:protect false} ["resources/public/js/compiled" "target"]
+
+  :main user-reports.server
 
   :cljsbuild {:builds
               [{:id "dev"
@@ -48,7 +54,7 @@
                            :pretty-print false}}]}
 
   :figwheel {;; :http-server-root "public" ;; default and assumes "resources"
-             ;; :server-port 3449 ;; default
+             ;; :server-port 3000
              ;; :server-ip "127.0.0.1"
 
              :css-dirs ["resources/public/css"] ;; watch and update CSS

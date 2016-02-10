@@ -3,8 +3,8 @@
             [pushy.core :as pushy]
             [re-frame.core :as rf]))
 
-(def routes ["/" {"" :index
-                  ["ticket/" :id] :ticket}])
+(def routes ["/app" {"" :index
+                     ["/ticket/" :id] :ticket}])
 
 (defn dispatch-route [match]
   (case (:handler match)

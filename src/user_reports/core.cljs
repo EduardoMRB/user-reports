@@ -1,58 +1,12 @@
-(ns user-reports.core
+(ns ^:figwheel-always user-reports.core
   (:require-macros [reagent.ratom :refer [reaction]])
   (:require [reagent.core :as reagent :refer [atom]]
             [re-frame.core :as rf]
-            [user-reports.route :as route]))
+            [user-reports.route :as route]
+            [user-reports.handlers :as handlers]
+            [user-reports.subs :as subs]))
 
 (enable-console-print!)
-
-(defonce db {:text "Hello world!"
-             :tickets [{:id 1
-                        :title "Problemas no filtro de eventos"
-                        :description "Quando filtro por data, o sistema apresenta um erro"
-                        :type "bug"
-                        :app "Potência"
-                        :issued-at #inst "2016-02-03"
-                        :issued-by "Carlos Andrade"
-                        :images [{:title "screenshot"
-                                  :url "http://whatbettyknows.com/wp-content/uploads/2014/03/FB-DST-bug.jpg"}]
-                        :open? true
-                        :responded? false}
-                       {:id 2
-                        :title "Fonte do site"
-                        :description "Trocar fonte do site para Helvetica"
-                        :type "suggestion"
-                        :app "Potência"
-                        :issued-at #inst "2016-02-02"
-                        :issued-by "Nora Ramos"
-                        :images [{:title "screenshot"
-                                  :url "http://whatbettyknows.com/wp-content/uploads/2014/03/FB-DST-bug.jpg"}]
-                        :open? false
-                        :responded? true}]})
-
-(rf/register-handler
- :initialize-db
- (fn [_ _] db))
-
-(rf/register-sub
- :tickets
- (fn [db _]
-   (reaction (:tickets @db))))
-
-(rf/register-sub
- :db
- (fn [db _]
-   (reaction @db)))
-
-(rf/register-handler
- :index
- (fn [db _]
-   (dissoc db :active-ticket)))
-
-(rf/register-handler
- :ticket
- (fn [db [_ ticket-id]]
-   (assoc db :active-ticket {:id ticket-id})))
 
 (defn navbar []
   [:nav.navbar.navbar-inverse.navbar-fixed-top
@@ -87,12 +41,50 @@
      [:span.pull-right
       [:span.glyphicon.glyphicon-paperclip]])])
 
+(defn input-val
+  "Takes an event and returns the value of it's target"
+  [e]
+  (-> e .-target .-value))
+
+(defn handle-message-send [ticket user message]
+  (when (not (empty? @message))
+    (rf/dispatch [:send-message (:id ticket) {:text    @message
+                                              :sent-by @user}])
+    (reset! message "")))
+
 (defn ticket-card [ticket]
-  [:div
-   [:h1 (:title ticket)]
-   [:p (:description ticket)]
-   [:p (str "Reportado por: " (:issued-by ticket)
-            " em: " (localize-date (:issued-at ticket)))]])
+  (let [active-user (rf/subscribe [:active-user])
+        message     (atom "")
+        messages    (rf/subscribe [:ticket-messages (:id ticket)])]
+    [:div.col-sm-12
+     [:h1 (:title ticket)]
+     [:p (:description ticket)]
+     [:p (str "Reportado por: " (:issued-by ticket)
+              " em: " (localize-date (:issued-at ticket)))]
+     (when (seq @messages)
+       [:div.col-sm-12 {:style {:margin-bottom "40px"}}
+        [:h2 "Mensagens"]
+        (for [message (or @messages [])]
+          [:div.row {:style {:margin-bottom "11px"}}
+           [:div.col-sm-12
+            [:div.col-sm-1
+             [:img.img-circle.avatar {:src   (get-in message [:sent-by :avatar])
+                                      :title (get-in message [:sent-by :name])}]]
+            [:div.col-sm-10
+             [:div.message-popup {:style {:min-height 50
+                                          :background-color "#fff"
+                                          :border "1px #ccc solid"}}
+              [:p {:style {:padding "5px"}} (:text message)]]]]])])
+     [:div.col-sm-12
+      [:div.col-sm-1
+       [:img.img-circle.avatar {:src (:avatar @active-user)}]]
+      [:div.col-sm-10
+       [:div.form-group
+        [:div.message-popup
+         [:textarea.form-control.message {:placeholder "Escreva sua resposta"
+                                          :on-change #(reset! message (input-val %))}]]]
+       [:button.btn.btn-success.pull-right {:on-click #(handle-message-send ticket active-user message)}
+        "Enviar"]]]]))
 
 (defn fetch-ticket [db ticket-id]
   (->> @db
@@ -117,15 +109,14 @@
      [:div.container.main
       ^{:key "navigation"} [navigation]
       (if (:active-ticket @db)
-        (let [active-ticket (-> @db :active-ticket :id)]
-          (println (fetch-ticket db active-ticket))
-          ^{:key (str "ticket-" active-ticket)} [ticket-card (fetch-ticket db active-ticket)])
+        (let [active-ticket (js/parseInt (-> @db :active-ticket :id))]
+          ^{:key (str "ticket-" active-ticket)} [ticket-card (get-in @db [:tickets active-ticket])])
         (list
          ^{:key "toolbar"} [toolbar]
          [:hr]
          [:div.row
           [:div.list-group
-           (for [ticket (:tickets @db)]
+           (for [[_ ticket] (:tickets @db)]
              ^{:key (str "row-" (:title ticket))} [ticket-row ticket])]]))]]))
 
 (defn ^:export init []
@@ -133,6 +124,8 @@
   (route/init)
   (reagent/render-component [tickets-app]
                             (. js/document (getElementById "app"))))
+
+(init)
 
 
 (defn on-js-reload []

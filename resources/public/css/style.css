@@ -1,3 +1,7 @@
+body {
+  background-color: floralwhite;
+}
+
 .list-text {
   display: inline-block;
 }
@@ -19,4 +23,46 @@
   margin-top: 40px;
 }
 
+.avatar {
+  width: 50px;
+}
 
+.message-popup {
+  position: relative;
+}
+
+.message-popup:after,
+.message-popup:before {
+  content: "";
+  position: absolute;
+  top: 0px;
+  left: -18px;
+  border-style: solid;
+  border-width: 0px 21px 18px 0px;
+  border-color: transparent #d5d9ed;
+  display: block;
+  width: 0;
+  z-index: -1;
+}
+
+.message-popup:after {
+  content: "";
+  position: absolute;
+  top: 1px;
+  left: -15px;
+  border-style: solid;
+  border-width: 0px 19px 16px 0px;
+  border-color: transparent #fff;
+  display: block;
+  width: 0;
+  z-index: 2;
+}
+
+.message {
+  border-radius: 0;
+}
+
+.message:focus {
+  border-color: #ccc;
+  box-shadow: 0;
+}
